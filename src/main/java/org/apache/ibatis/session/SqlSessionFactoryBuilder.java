@@ -44,15 +44,23 @@ public class SqlSessionFactoryBuilder {
     return build(reader, null, properties);
   }
 
+  /**
+   * build()方法 的主要实现
+   */
   public SqlSessionFactory build(Reader reader, String environment, Properties properties) {
     try {
+      // SqlSessionFactory 会创建 XMLConfigBuilder对象 来解析 mybatis-config.xml配置文件
+      // XMLConfigBuilder 继承自 BaseBuilder抽象类，顾名思义这一系的类使用了 建造者设计模式
       XMLConfigBuilder parser = new XMLConfigBuilder(reader, environment, properties);
+      // 解析配置文件的内容 到 Configuration对象，根据 Configuration对象
+      // 创建 DefaultSqlSessionFactory对象，然后返回
       return build(parser.parse());
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error building SqlSession.", e);
     } finally {
       ErrorContext.instance().reset();
       try {
+        // 关闭配置文件输入流
         reader.close();
       } catch (IOException e) {
         // Intentionally ignore. Prefer previous error.

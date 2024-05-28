@@ -120,26 +120,39 @@ public class MapperAnnotationBuilder {
 
   public void parse() {
     String resource = type.toString();
+    // 是否已经加载过该接口
     if (!configuration.isResourceLoaded(resource)) {
+      // 检查是否加载过该接口对应的映射文件，如果未加载，则创建 XMLMapperBuilder对象
+      // 解析对应的映射文件，该过程就是前面介绍的映射配置文件解析过程
       loadXmlResource();
       configuration.addLoadedResource(resource);
       assistant.setCurrentNamespace(type.getName());
+      // 解析 @CacheNamespace注解
       parseCache();
+      // 解析 @CacheNamespaceRef注解
       parseCacheRef();
+      // type接口 的所有方法
       Method[] methods = type.getMethods();
       for (Method method : methods) {
         try {
           // issue #237
           if (!method.isBridge()) {
+            // 解析 SelectKey、ResultMap 等注解，并创建 MappedStatement对象
             parseStatement(method);
           }
         } catch (IncompleteElementException e) {
+          // 如果解析过程出现 IncompleteElementException异常，可能是因为引用了
+          // 未解析的注解，这里将出现异常的方法记录下来，后面提供补偿机制，重新进行解析
           configuration.addIncompleteMethod(new MethodResolver(this, method));
         }
       }
     }
+    // 遍历 configuration 中的 incompleteMethods集合，集合中记录了未解析的方法
+    // 重新调用这些方法进行解析
     parsePendingMethods();
   }
+
+  // 另外，在 MapperAnnotationBuilder 的 parse()方法 中解析的注解，都能在映射配置文件中找到与之对应的 XML 节点，且两者的解析过程也非常相似。
 
   private void parsePendingMethods() {
     Collection<MethodResolver> incompleteMethods = configuration.getIncompleteMethods();

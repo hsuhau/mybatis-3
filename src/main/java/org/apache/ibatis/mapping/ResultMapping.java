@@ -26,24 +26,44 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * select 语句 查询得到的结果是一张二维表，水平方向上是一个个字段，垂直方向上是一条条记录。而 Java 是面向对象的程序设计语言，对象是根据类的定义创建的，类之间的引用关系可以认为是嵌套结构。JDBC 编程 中，为了将结果集中的数据映射成 VO 对象，我们需要自己写代码从结果集中获取数据，然后将数据封装成对应的 VO 对象，并设置好对象之间的关系，这种 ORM 的过程中存在大量重复的代码。
+ *
+ * Mybatis 通过 <resultMap>节点 定义了 ORM 规则，可以满足大部分的映射需求，减少重复代码，提高开发效率。
+ *
+ * 在分析 <resultMap>节点 的解析过程之前，先看一下该过程使用的数据结构。每个 ResultMapping 对象 记录了结果集中的一列与 JavaBean 中一个属性之间的映射关系。<resultMap>节点 下除了 <discriminator>子节点 的其它子节点，都会被解析成对应的 ResultMapping 对象。
+ *
+ * public class ResultMapping {
+ *
  * @author Clinton Begin
  */
 public class ResultMapping {
 
   private Configuration configuration;
+  // 对应节点的 property属性，表示 该列进行映射的属性
   private String property;
+  // 对应节点的 column属性，表示 从数据库中得到的列名或列名的别名
   private String column;
+  // 表示 一个 JavaBean 的完全限定名，或一个类型别名
   private Class<?> javaType;
+  // 进行映射列的 JDBC类型
   private JdbcType jdbcType;
+  // 类型处理器
   private TypeHandler<?> typeHandler;
+  // 该属性通过 id 引用了另一个 <resultMap>节点，它负责将结果集中的一部分列映射成
+  // 它所关联的结果对象。这样我们就可以通过 join方式 进行关联查询，然后直接映射成
+  // 多个对象，并同时设置这些对象之间的组合关系(nested嵌套的)
   private String nestedResultMapId;
+  // 该属性通过 id 引用了另一个 <select>节点，它会把指定的列值传入 select属性 指定的
+  // select语句 中作为参数进行查询。使用该属性可能会导致 ORM 中的 N+1问题，请谨慎使用
   private String nestedQueryId;
   private Set<String> notNullColumns;
   private String columnPrefix;
+  // 处理后的标志，共有两个：id 和 constructor
   private List<ResultFlag> flags;
   private List<ResultMapping> composites;
   private String resultSet;
   private String foreignColumn;
+  // 是否延迟加载
   private boolean lazy;
 
   ResultMapping() {
