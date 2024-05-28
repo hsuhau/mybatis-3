@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * 该枚举类描述了 JDBC 中的数据类型
+ *
  * @author Clinton Begin
  */
 public enum JdbcType {
@@ -68,6 +70,8 @@ public enum JdbcType {
   DATETIMEOFFSET(-155); // SQL Server 2008
 
   public final int TYPE_CODE;
+
+  /** 该静态集合维护了 常量编码 与  JdbcType 之间的关系 */
   private static Map<Integer,JdbcType> codeLookup = new HashMap<Integer,JdbcType>();
 
   static {

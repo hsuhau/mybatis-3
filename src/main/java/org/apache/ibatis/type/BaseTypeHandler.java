@@ -24,6 +24,8 @@ import org.apache.ibatis.executor.result.ResultMapException;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 可用于实现自定义的 TypeHandler
+ *
  * @author Clinton Begin
  * @author Simone Tripodi
  */
@@ -35,6 +37,10 @@ public abstract class BaseTypeHandler<T> extends TypeReference<T> implements Typ
     this.configuration = c;
   }
 
+
+  /**
+   * 只是处理了一些数据为空的特殊情况，非空数据的处理都交给子类去处理
+   */
   @Override
   public void setParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException {
     if (parameter == null) {

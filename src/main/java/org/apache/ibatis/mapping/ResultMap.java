@@ -34,6 +34,8 @@ import org.apache.ibatis.reflection.ParamNameUtil;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * TypeHandler 主要用于单个参数的类型转换，如果要将多个列的值转换成一个 Java 对象，可以在映射文件中定义合适的映射规则 <resultMap> 完成映射。
+ *
  * @author Clinton Begin
  */
 public class ResultMap {

@@ -42,29 +42,52 @@ import org.apache.ibatis.reflection.property.PropertyNamer;
  * This class represents a cached set of class definition information that
  * allows for easy mapping between property names and getter/setter methods.
  *
+ * Reflector 类 主要实现了对 JavaBean 的元数据属性的封装，比如：可读属性列表，可写属性列表；及反射操作的封装，如：属性对应的 setter 方法，getter 方法 的反射调用。
+ *
  * @author Clinton Begin
  */
 public class Reflector {
 
+  // JavaBean 的 Class类型，在调用 Reflector 的构造方法时初始化该值
   private final Class<?> type;
+
+  // 可读的属性列表
   private final String[] readablePropertyNames;
+  // 可写的属性列表
   private final String[] writeablePropertyNames;
+
+  // key 属性名，value 该属性名对应的 setter方法调用器
   private final Map<String, Invoker> setMethods = new HashMap<String, Invoker>();
+  // key 属性名，value 该属性名对应的 getter方法调用器
   private final Map<String, Invoker> getMethods = new HashMap<String, Invoker>();
+
+  // key 属性名称，value 该属性 setter方法的返回值类型
   private final Map<String, Class<?>> setTypes = new HashMap<String, Class<?>>();
+  // key 属性名称，value 该属性 getter方法的返回值类型
   private final Map<String, Class<?>> getTypes = new HashMap<String, Class<?>>();
+
+  // type 的默认构造方法
   private Constructor<?> defaultConstructor;
 
+  // 所有属性名称的集合
   private Map<String, String> caseInsensitivePropertyMap = new HashMap<String, String>();
 
   public Reflector(Class<?> clazz) {
     type = clazz;
     addDefaultConstructor(clazz);
+
+    // 处理 clazz 中的 所有getter方法，填充 getMethods集合 和 getTypes集合
     addGetMethods(clazz);
     addSetMethods(clazz);
+
+    // 处理没有 getter、setter方法 的字段
     addFields(clazz);
+
+    // 根据 getMethods、setMethods集合 初始化可读、可写的属性
     readablePropertyNames = getMethods.keySet().toArray(new String[getMethods.keySet().size()]);
     writeablePropertyNames = setMethods.keySet().toArray(new String[setMethods.keySet().size()]);
+
+    // 初始化 caseInsensitivePropertyMap集合，key 属性名的大写，value 属性名
     for (String propName : readablePropertyNames) {
       caseInsensitivePropertyMap.put(propName.toUpperCase(Locale.ENGLISH), propName);
     }

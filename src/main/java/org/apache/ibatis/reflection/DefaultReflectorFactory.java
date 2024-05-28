@@ -18,6 +18,9 @@ package org.apache.ibatis.reflection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * 顾名思义，Reflector 的工厂模式，跟大部分工厂类一样，里面肯定有通过标识获取对象的方法。类的设计也遵照了 接口，实现类的模式，虽然本接口只有一个默认实现。
+ */
 public class DefaultReflectorFactory implements ReflectorFactory {
   private boolean classCacheEnabled = true;
   private final ConcurrentMap<Class<?>, Reflector> reflectorMap = new ConcurrentHashMap<Class<?>, Reflector>();
@@ -35,10 +38,13 @@ public class DefaultReflectorFactory implements ReflectorFactory {
     this.classCacheEnabled = classCacheEnabled;
   }
 
+  /**
+   * 实例化一个 ConcurrentMap全局变量，然后暴露一个方法从 map 中获取目标对象，这种设计是很多框架都会用的
+   */
   @Override
   public Reflector findForClass(Class<?> type) {
     if (classCacheEnabled) {
-            // synchronized (type) removed see issue #461
+      // synchronized (type) removed see issue #461
       Reflector cached = reflectorMap.get(type);
       if (cached == null) {
         cached = new Reflector(type);

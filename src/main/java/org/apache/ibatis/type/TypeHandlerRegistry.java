@@ -49,20 +49,38 @@ import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.reflection.Jdk;
 
 /**
+ * TypeHandlerRegistry 主要负责管理所有已知的 TypeHandler，Mybatis 在初始化过程中会为所有已知的 TypeHandler 创建对象，并注册到 TypeHandlerRegistry。
+ *
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
 public final class TypeHandlerRegistry {
 
+  /** 该集合主要用于从结果集读取数据时，将数据从 JDBC类型 转换成 Java类型 */
   private final Map<JdbcType, TypeHandler<?>> JDBC_TYPE_HANDLER_MAP = new EnumMap<JdbcType, TypeHandler<?>>(JdbcType.class);
+
+  /**
+   * 记录了 Java类型 向指定 JdbcType 转换时，需要使用的 TypeHandler对象。
+   * 如：String 可能转换成数据库的 char、varchar 等多种类型，所以存在一对多的关系
+   */
   private final Map<Type, Map<JdbcType, TypeHandler<?>>> TYPE_HANDLER_MAP = new ConcurrentHashMap<Type, Map<JdbcType, TypeHandler<?>>>();
+
   private final TypeHandler<Object> UNKNOWN_TYPE_HANDLER = new UnknownTypeHandler(this);
+
+  /** key：TypeHandler 的类型；value：该 TypeHandler类型 对应的 TypeHandler对象 */
   private final Map<Class<?>, TypeHandler<?>> ALL_TYPE_HANDLERS_MAP = new HashMap<Class<?>, TypeHandler<?>>();
 
   private static final Map<JdbcType, TypeHandler<?>> NULL_TYPE_HANDLER_MAP = Collections.emptyMap();
 
   private Class<? extends TypeHandler> defaultEnumTypeHandler = EnumTypeHandler.class;
 
+  /**
+   * 进行 Java 及 JDBC基本数据类型 的 TypeHandler 注册
+   * 除了注册 Mybatis 提供的 基本TypeHandler 外，我们也可以添加自定义的 TypeHandler
+   * 接口实现，在 mybatis-config.xml配置文件 中 <typeHandlers>节点 下添加相应的
+   * <typeHandlers>节点配置，并指定自定义的 TypeHandler实现类。Mybatis 在初始化时
+   * 会解析该节点，并将 TypeHandler类型 的对象注册到 TypeHandlerRegistry 中供 Mybatis 后续使用
+   */
   public TypeHandlerRegistry() {
     register(Boolean.class, new BooleanTypeHandler());
     register(boolean.class, new BooleanTypeHandler());
@@ -215,11 +233,22 @@ public final class TypeHandlerRegistry {
     return getTypeHandler(javaTypeReference.getRawType(), jdbcType);
   }
 
+  // 查找 TypeHandler
+  //TypeHandlerRegistry 其实就是一个容器，前面注册了一堆东西，也就是为了方便获取，其对应的方法为 getTypeHandler()，该方法也存在多种重载，其中最重要的一个重载为 getTypeHandler(Type type, JdbcType jdbcType)，它会根据指定的 Java 类型 和 JdbcType 类型 查找相应的 TypeHandler 对象。
+
+  /**
+   * 获取 TypeHandler对象
+   * getTypeHandler()方法 亦存在多种重载，而本重载方法被其它多个重载方法调用
+   */
   @SuppressWarnings("unchecked")
   private <T> TypeHandler<T> getTypeHandler(Type type, JdbcType jdbcType) {
     if (ParamMap.class.equals(type)) {
       return null;
     }
+
+    // Java数据类型 与 JDBC数据类型 的关系往往是一对多，
+    // 所以一般会先根据 Java数据类型 获取 Map<JdbcType, TypeHandler<?>>对象
+    // 再根据 JDBC数据类型 获取对应的 TypeHandler对象
     Map<JdbcType, TypeHandler<?>> jdbcHandlerMap = getJdbcHandlerMap(type);
     TypeHandler<?> handler = null;
     if (jdbcHandlerMap != null) {
@@ -371,6 +400,13 @@ public final class TypeHandlerRegistry {
     register((Type) type, jdbcType, handler);
   }
 
+  // 注册 TypeHandler 对象
+  // TypeHandlerRegistry 中的 register()方法 实现了注册 TypeHandler 对象 的功能，该方法存在多种重载，但大多数 register()方法 最终都会走 register(Type javaType, JdbcType jdbcType, TypeHandler<?> handler) 的处理逻辑，该重载方法中分别指定了 TypeHandler 能够处理的 Java 类型、JDBC 类型、TypeHandler 对象。
+
+  /**
+   * TypeHandlerRegistry 中对 register()方法 实现了多种重载，本 register()方法
+   * 被很多重载方法调用，用来完成注册功能。
+   */
   private void register(Type javaType, JdbcType jdbcType, TypeHandler<?> handler) {
     if (javaType != null) {
       Map<JdbcType, TypeHandler<?>> map = TYPE_HANDLER_MAP.get(javaType);
@@ -442,13 +478,20 @@ public final class TypeHandlerRegistry {
   }
 
   // scan
+  // 另外，TypeHandlerRegistry 还提供了扫描并注册指定包目录下 TypeHandler 实现类 的 register()方法 重载。
 
+  /**
+   * 从指定 包名packageName 中获取自定义的 TypeHandler实现类
+   *
+   * @param packageName
+   */
   public void register(String packageName) {
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<Class<?>>();
-    resolverUtil.find(new ResolverUtil.IsA(TypeHandler.class), packageName);
+    // 查找指定包下的 TypeHandler接口实现类    resolverUtil.find(new ResolverUtil.IsA(TypeHandler.class), packageName);
     Set<Class<? extends Class<?>>> handlerSet = resolverUtil.getClasses();
     for (Class<?> type : handlerSet) {
       //Ignore inner classes and interfaces (including package-info.java) and abstract classes
+      // 忽略掉 内部类、接口 及 抽象类
       if (!type.isAnonymousClass() && !type.isInterface() && !Modifier.isAbstract(type.getModifiers())) {
         register(type);
       }
