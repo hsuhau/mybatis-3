@@ -23,12 +23,18 @@ import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
 
 /**
+ * Cache 接口 的实现类有很多，但大部分都是装饰器，只有 PerpetualCache 提供了 Cache 接口 的基本实现。
+ *
+ * PerpetualCache（Perpetual：永恒的，持续的）在缓存模块中扮演着被装饰的角色，其实现比较简单，底层使用 HashMap 记录缓存项，也是通过该 HashMap 对象 的方法实现的 Cache 接口 中定义的相应方法。
+ *
  * @author Clinton Begin
  */
 public class PerpetualCache implements Cache {
 
+  // Cache对象 的唯一标识
   private final String id;
 
+  // 其所有的缓存功能实现，都是基于 JDK 的 HashMap 提供的方法
   private Map<Object, Object> cache = new HashMap<Object, Object>();
 
   public PerpetualCache(String id) {
@@ -70,6 +76,9 @@ public class PerpetualCache implements Cache {
     return null;
   }
 
+  /**
+   * 其重写了 Object 中的 equals() 和 hashCode()方法，两者都只关心 id字段
+   */
   @Override
   public boolean equals(Object o) {
     if (getId() == null) {

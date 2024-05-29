@@ -39,20 +39,30 @@ import java.util.concurrent.locks.ReadWriteLock;
  * @author Clinton Begin
  */
 
+//MyBatis 中的缓存分为一级缓存、二级缓存，但在本质上是相同的，它们使用的都是 Cache 接口 的实现。MyBatis 缓存模块 的设计，使用了装饰器模式，这里不对此进行过多解析，以后会专门开一篇博文分析常用框架中使用到的设计模式。
+
+// Cache 接口 是缓存模块中最核心的接口，它定义了所有缓存的基本行为。
+
 public interface Cache {
 
   /**
+   * 获取当前缓存的 Id
+   *
    * @return The identifier of this cache
    */
   String getId();
 
   /**
+   * 存入缓存的 key 和 value，key 一般为 CacheKey对象
+   *
    * @param key Can be any object but usually it is a {@link CacheKey}
    * @param value The result of a select.
    */
   void putObject(Object key, Object value);
 
   /**
+   * 根据 key 获取缓存值
+   *
    * @param key The key
    * @return The object stored in the cache.
    */
@@ -68,7 +78,8 @@ public interface Cache {
    * This way other threads will wait for the value to be 
    * available instead of hitting the database.
    *
-   * 
+   * 根据 key 获取缓存值
+   *
    * @param key The key
    * @return Not used
    */
@@ -76,12 +87,16 @@ public interface Cache {
 
   /**
    * Clears this cache instance
+   *
+   * 根据 key 获取缓存值
    */  
   void clear();
 
   /**
    * Optional. This method is not called by the core.
-   * 
+   *
+   * 获取缓存的大小
+   *
    * @return The number of elements stored in the cache (not its capacity).
    */
   int getSize();
@@ -92,6 +107,13 @@ public interface Cache {
    * Any locking needed by the cache must be provided internally by the cache provider.
    * 
    * @return A ReadWriteLock 
+   */
+
+  /**
+   * ！！！！！！！！！！！！！！！！！！！！！！！！！！
+   * 获取读写锁，可以看到，这个接口方法提供了默认的实现！！
+   * 这是 Java8 的新特性！！只是平时开发时很少用到！！！
+   * ！！！！！！！！！！！！！！！！！！！！！！！！！！
    */
   ReadWriteLock getReadWriteLock();
 
