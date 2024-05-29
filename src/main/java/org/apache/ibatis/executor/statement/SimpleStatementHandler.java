@@ -32,10 +32,13 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
+ * SimpleStatementHandler 继承了 BaseStatementHandler 抽象类。其底层使用 java.sql.Statement 来完成数据库的相关操作，所以 SQL 语句中不存在占位符，所以 SimpleStatementHandler 的 parameterize() 方法是空实现。SimpleStatementHandler 的 instantiateStatement() 方法直接通过 JDBC Connection 创建 Statement 对象。
+ *
  * @author Clinton Begin
  */
 public class SimpleStatementHandler extends BaseStatementHandler {
 
+  // 构造方法主要用于属性的初始化
   public SimpleStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
     super(executor, mappedStatement, parameter, rowBounds, resultHandler, boundSql);
   }
@@ -81,11 +84,14 @@ public class SimpleStatementHandler extends BaseStatementHandler {
     return resultSetHandler.<E>handleCursorResultSets(statement);
   }
 
+  // 直接通过Connection创建Statement对象
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     if (mappedStatement.getResultSetType() != null) {
+      // 如果结果集类型是DEFAULT默认的，则直接用connection创建Statement对象
       return connection.createStatement(mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);
     } else {
+      // 否则，设置结果集类型，设置结果集 只读
       return connection.createStatement();
     }
   }
