@@ -39,10 +39,17 @@ public class JdbcTransaction implements Transaction {
 
   private static final Log log = LogFactory.getLog(JdbcTransaction.class);
 
+  // 当前事务对应的数据库连接
   protected Connection connection;
+
+  // 当前事务对应的数据源
   protected DataSource dataSource;
+
+  // 事务隔离级别
   protected TransactionIsolationLevel level;
+
   // MEMO: We are aware of the typo. See #941
+  // 是否自动提交
   protected boolean autoCommmit;
 
   public JdbcTransaction(DataSource ds, TransactionIsolationLevel desiredLevel, boolean desiredAutoCommit) {
@@ -63,6 +70,7 @@ public class JdbcTransaction implements Transaction {
     return connection;
   }
 
+  // 提交、回滚、关闭等操作的代码都比较简单，只对原生的 JDBC操作 做了简单封装
   @Override
   public void commit() throws SQLException {
     if (connection != null && !connection.getAutoCommit()) {

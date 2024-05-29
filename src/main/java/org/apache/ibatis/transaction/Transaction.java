@@ -20,7 +20,10 @@ import java.sql.SQLException;
 
 /**
  * Wraps a database connection.
- * Handles the connection lifecycle that comprises: its creation, preparation, commit/rollback and close. 
+ * Handles the connection lifecycle that comprises: its creation, preparation, commit/rollback and close.
+ *
+ * 遵循 “接口-实现类” 的设计原则，Mybatis 也是先使用 Transaction 接口 对数据库事务做了抽象，而实现类则只提供了两个，即：JdbcTransaction 和 ManagedTransaction。这两种对象的获取，使用了两个对应的工厂类 JdbcTransactionFactory 和 ManagedTransactionFactory。
+ * 不过一般我们并不会使用 Mybatis 管理事务，而是将 Mybatis 集成到 Spring，由 Spring 进行事务的管理。细节部分会在后面的文章中详细讲解。
  *
  * @author Clinton Begin
  */
@@ -28,6 +31,8 @@ public interface Transaction {
 
   /**
    * Retrieve inner database connection
+   * 获取连接对象
+   *
    * @return DataBase connection
    * @throws SQLException
    */
@@ -35,24 +40,32 @@ public interface Transaction {
 
   /**
    * Commit inner database connection.
+   * 提交事务
+   *
    * @throws SQLException
    */
   void commit() throws SQLException;
 
   /**
    * Rollback inner database connection.
+   * 回滚事务
+   *
    * @throws SQLException
    */
   void rollback() throws SQLException;
 
   /**
    * Close inner database connection.
+   * 关闭数据库连接
+   *
    * @throws SQLException
    */
   void close() throws SQLException;
 
   /**
    * Get transaction timeout if set
+   * 获取配置的事务超时时间
+   *
    * @throws SQLException
    */
   Integer getTimeout() throws SQLException;
