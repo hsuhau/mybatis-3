@@ -32,6 +32,10 @@ import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 
 /**
+ * DefaultSqlSessionFactory 是 SqlSessionFactory 接口的默认实现，主要提供了两种创建 DefaultSqlSession 对象的方式，一种方式是通过数据源获取数据库连接，并创建 Executor 对象以及 DefaultSqlSession 对象；另一种方式是用户提供数据库连接对象，DefaultSqlSessionFactory 根据该数据库连接对象获取 autoCommit 属性，创建 Executor 对象以及 DefaultSqlSession 对象。
+ *
+ * DefaultSqISessionFactory 提供的所有 openSession() 方法重载都是基于上述两种方式创建 DefaultSqlSession 对象的。
+ *
  * @author Clinton Begin
  */
 public class DefaultSqlSessionFactory implements SqlSessionFactory {
@@ -90,10 +94,17 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
+      // 获取配置的Environment对象
       final Environment environment = configuration.getEnvironment();
+      // 从environment中获取TransactionFactory对象，如果没有，就创建一个ManagedTransactionFactory实例并返回
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // 从事务工厂中获取一个事务对象
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      // 根据事务对象tx和配置的Executor类型execType创建Executor实例
+      // ExecutorType是个枚举类型，有三个值 SIMPLE, REUSE, BATCH，分别对应了
+      // SimpleExecutor、ReuseExecutor、BatchExecutor
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 创建DefaultSqlSession对象
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
@@ -107,12 +118,14 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     try {
       boolean autoCommit;
       try {
+        // 根据当前连接对象获取autoCommit属性（是否自动提交事务）
         autoCommit = connection.getAutoCommit();
       } catch (SQLException e) {
         // Failover to true, as most poor drivers
         // or databases won't support transactions
         autoCommit = true;
-      }      
+      }
+      // 除了获取autoCommit属性的方式和上面不一样外，下面的处理都与上面完全相同
       final Environment environment = configuration.getEnvironment();
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
       final Transaction tx = transactionFactory.newTransaction(connection);

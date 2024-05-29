@@ -36,6 +36,8 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * 在 BatchExecutor 实现中，可以缓存多条 SQL 语句，等待合适时机将缓存的多条 SQL 语句一并发送到数据库执行。Executor 的 flushStatements() 方法主要是针对批处理多条 SQL 语句的，它会调用 doFlushStatements() 这个基本方法处理 Executor 中缓存的多条 SQL 语句。在 BaseExecutor 的 commit() 及 rollback() 等方法中都会首先调用 flushStatements() 方法，然后再执行相关事务操作。
+ *
  * @author Jeff Butler 
  */
 public class BatchExecutor extends BaseExecutor {

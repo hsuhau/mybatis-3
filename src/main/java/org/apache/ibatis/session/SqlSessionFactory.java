@@ -19,11 +19,15 @@ import java.sql.Connection;
 
 /**
  * Creates an {@link SqlSession} out of a connection or a DataSource
+ *
+ * SqlSessionFactory 负责创建 SqlSession 对象，其中包含了多个 openSession() 方法的重载，可以通过其参数指定事务的隔离级别、底层使用 Executor 的类型、以及是否自动提交事务等方面的配置。
  * 
  * @author Clinton Begin
  */
 public interface SqlSessionFactory {
 
+  // 提供了openSession()方法的多种重载，根据相应的参数 可以指定事务的隔离级别、
+  // 底层使用的Executor类型、以及是否自动提交事务等配置
   SqlSession openSession();
 
   SqlSession openSession(boolean autoCommit);

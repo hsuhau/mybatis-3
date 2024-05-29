@@ -45,21 +45,35 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * BaseExecutor 是一个实现了 Executor 接口的抽象类，它实现了 Executor 接口的大部分方法。BaseExecutor 中主要提供了缓存管理和事务管理的基本功能，继承 BaseExecutor 的子类只要实现四个基本方法来完成数据库的相关操作即可，这四个方法分别是：doUpdate() 方法、doQuery() 方法、doQueryCursor() 方法、doFlushStatement() 方法。
+ *
  * @author Clinton Begin
  */
 public abstract class BaseExecutor implements Executor {
 
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
 
+  // 事务对象，用于实现事务的提交、回滚和关闭
   protected Transaction transaction;
+
+  // 其中封装的Executor对象
   protected Executor wrapper;
 
+  // 延迟加载队列
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+
+  // 一级缓存，用于缓存该Executor对象查询结果集映得到的结果对象
   protected PerpetualCache localCache;
+
+  // 一级缓存，用于缓存输出类型的参数
   protected PerpetualCache localOutputParameterCache;
+
   protected Configuration configuration;
 
+  // 记录查询嵌套的次数
   protected int queryStack;
+
+  // 是否关闭
   private boolean closed;
 
   protected BaseExecutor(Configuration configuration, Transaction transaction) {
@@ -84,6 +98,7 @@ public abstract class BaseExecutor implements Executor {
   public void close(boolean forceRollback) {
     try {
       try {
+        // 根据forceRollback参数决定 是否强制回滚该事务
         rollback(forceRollback);
       } finally {
         if (transaction != null) {
@@ -126,6 +141,8 @@ public abstract class BaseExecutor implements Executor {
     if (closed) {
       throw new ExecutorException("Executor was closed.");
     }
+    // 这是一个交由子类实现的抽象方法，参数isRollBack表示
+    // 是否执行Executor中缓存的SQL语句，false表示执行，true表示不执行
     return doFlushStatements(isRollBack);
   }
 
@@ -235,11 +252,15 @@ public abstract class BaseExecutor implements Executor {
 
   @Override
   public void commit(boolean required) throws SQLException {
+    // 检查当前连接是否已关闭
     if (closed) {
       throw new ExecutorException("Cannot commit, transaction is already closed");
     }
+    // 清除一级缓存
     clearLocalCache();
+    // 不执行Executor中缓存的SQL语句
     flushStatements();
+    // 根据参数required决定是否提交事务
     if (required) {
       transaction.commit();
     }
@@ -249,9 +270,12 @@ public abstract class BaseExecutor implements Executor {
   public void rollback(boolean required) throws SQLException {
     if (!closed) {
       try {
+        // 清除一级缓存
         clearLocalCache();
+        // 批量执行缓存的sql语句
         flushStatements(true);
       } finally {
+        // 根据required决定是否回滚事务
         if (required) {
           transaction.rollback();
         }

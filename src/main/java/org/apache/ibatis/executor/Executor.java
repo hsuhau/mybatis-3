@@ -28,38 +28,52 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 
 /**
+ * Executor 是 MyBatis 的核心接口之一，其中定义了数据库操作的基本方法。在实际应用中经常涉及的 SqISession 接口的功能，都是基于 Executor 接口实现的。
+ *
  * @author Clinton Begin
  */
 public interface Executor {
 
   ResultHandler NO_RESULT_HANDLER = null;
 
+  // 执行update、insert、delete三种类型的SQL语句
   int update(MappedStatement ms, Object parameter) throws SQLException;
 
+  // 执行select类型的SQL语句，返回值分为结果对象列表或游标对象
   <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey cacheKey, BoundSql boundSql) throws SQLException;
 
   <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException;
 
   <E> Cursor<E> queryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds) throws SQLException;
 
+  // 批量执行SQL语句
   List<BatchResult> flushStatements() throws SQLException;
 
+  // 提交事务
   void commit(boolean required) throws SQLException;
 
+  // 回滚事务
   void rollback(boolean required) throws SQLException;
 
+  // 创建缓存中用到的CacheKey对象
   CacheKey createCacheKey(MappedStatement ms, Object parameterObject, RowBounds rowBounds, BoundSql boundSql);
 
+  // 根据CacheKey对象查找缓存
   boolean isCached(MappedStatement ms, CacheKey key);
 
+  // 清空一级缓存
   void clearLocalCache();
 
+  // 延迟加载一级缓存中的数据
   void deferLoad(MappedStatement ms, MetaObject resultObject, String property, CacheKey key, Class<?> targetType);
 
+  // 获取事务
   Transaction getTransaction();
 
+  // 关闭事务
   void close(boolean forceRollback);
 
+  // 是否关闭
   boolean isClosed();
 
   void setExecutorWrapper(Executor executor);
