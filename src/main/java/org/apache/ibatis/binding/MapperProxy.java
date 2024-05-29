@@ -28,14 +28,23 @@ import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.SqlSession;
 
 /**
+ * MapperProxy 实现了 InvocationHandler 接口，为 Mapper 接口 的方法调用织入了统一处理。
+ *
  * @author Clinton Begin
  * @author Eduardo Macarron
  */
 public class MapperProxy<T> implements InvocationHandler, Serializable {
 
   private static final long serialVersionUID = -6424540398559729838L;
+
+  // 记录关联的 sqlSession对象
   private final SqlSession sqlSession;
+
+  // 对应的 Mapper接口 的 Class对象
   private final Class<T> mapperInterface;
+
+  // 用于缓存 MapperMethod对象，key：Mapper接口 中方法对应的 Method对象，
+  // value：MapperMethod对象（该对象会完成参数转换 及 sql语句 的执行功能）
   private final Map<Method, MapperMethod> methodCache;
 
   public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethod> methodCache) {
@@ -44,9 +53,11 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     this.methodCache = methodCache;
   }
 
+  // 为被代理对象的方法 织入统一处理
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
+      // 如果目标方法继承自 Object，则直接调用目标方法
       if (Object.class.equals(method.getDeclaringClass())) {
         return method.invoke(this, args);
       } else if (isDefaultMethod(method)) {
@@ -55,10 +66,13 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
     }
+    // 从缓存中获取 mapperMethod对象，如果没有就创建新的
     final MapperMethod mapperMethod = cachedMapperMethod(method);
+    // 执行 sql语句，返回结果集
     return mapperMethod.execute(sqlSession, args);
   }
 
+  // 主要负责维护 methodCache 缓存
   private MapperMethod cachedMapperMethod(Method method) {
     MapperMethod mapperMethod = methodCache.get(method);
     if (mapperMethod == null) {
