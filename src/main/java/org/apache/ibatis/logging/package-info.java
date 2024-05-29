@@ -17,3 +17,7 @@
  * TODO fillme.
  */
 package org.apache.ibatis.logging;
+
+/**
+ * 有了日志接口必然有实现类, mybatis 有log4j2 、 slf4j 等日志的相关实现 , 下面是Slf4jImpl的代码,其他代码也是一样的模式进行初始化就不再重复贴代码了.
+ */
